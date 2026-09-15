@@ -1,0 +1,1968 @@
+<!DOCTYPE html>
+<html lang="pt" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scrum Quiz</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Baloo 2', 'Comic Sans MS', 'Trebuchet MS', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 45%, #48dbfb 75%, #ff9ff3 100%);
+  background-size: 300% 300%;
+  animation: bgshift 12s ease infinite;
+  min-height: 100vh; padding: 20px; color: #2d2d2d;
+}
+@keyframes bgshift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+.container { max-width: 700px; margin: 0 auto; }
+.header { text-align: center; color: #fff; padding: 26px 20px; }
+.header h1 { font-size: 30px; font-weight: 800; margin-bottom: 6px; text-shadow: 0 3px 0 rgba(0,0,0,0.15); }
+.header .meta { font-size: 14px; opacity: 0.95; font-weight: 600; }
+.progress-bar { background: rgba(255,255,255,0.35); border-radius: 20px; height: 12px; margin: 18px 0; overflow: hidden; border: 2px solid rgba(255,255,255,0.5); }
+.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 20px; }
+.question { background: #fff; border-radius: 24px; padding: 28px; box-shadow: 0 14px 0 rgba(0,0,0,0.12); display: none; border: 4px solid #2d2d2d; position: relative; overflow: hidden; }
+.question.active { display: block; }
+.q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; font-size: 13px; }
+.q-number { font-weight: 800; color: #ff6b6b; background: #fff0f0; padding: 6px 12px; border-radius: 20px; }
+.streak { font-weight: 800; color: #e67e22; }
+.streak:empty { display: none; }
+.q-text { font-size: 19px; font-weight: 700; line-height: 1.5; margin-bottom: 22px; color: #222; }
+.options { display: flex; flex-direction: column; gap: 12px; }
+.option-wrapper { display: flex; flex-direction: column; }
+.option {
+  display: flex; align-items: center; gap: 12px; padding: 16px 18px;
+  border: 3px solid #2d2d2d; border-radius: 18px; background: #fffdf5;
+  cursor: pointer; transition: transform 0.12s, background 0.2s; text-align: left; font-size: 15px; font-weight: 600; width: 100%;
+  box-shadow: 0 4px 0 #2d2d2d;
+}
+[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
+.option:hover:not(.disabled) { transform: translateY(-2px); background: #fff7e0; }
+.option:active:not(.disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #2d2d2d; }
+.option.selected { background: #eef2ff; }
+.option.correct { border-color: #22c55e; background: #dcfce7; }
+.option.incorrect { border-color: #ef4444; background: #fee2e2; }
+.option.disabled { cursor: default; }
+.option.show-correct { border-color: #22c55e; background: #dcfce7; }
+.opt-emoji { font-size: 20px; flex-shrink: 0; }
+.opt-text { line-height: 1.5; }
+
+.option-feedback { margin: 6px 0 4px 4px; padding: 12px 16px; border-radius: 14px; font-size: 14px; line-height: 1.5; border: 2px dashed transparent; }
+.option-feedback.correct-feedback { background: #dcfce7; border-color: #22c55e; }
+.option-feedback.incorrect-feedback { background: #fef3f2; border-color: #fca5a5; }
+.feedback-status { font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.feedback-status.correct { color: #166534; }
+.feedback-status.incorrect { color: #991b1b; }
+.feedback-rationale { color: #444; }
+
+.hint-box { margin: 12px 0; border-radius: 16px; overflow: hidden; background: #fffbeb; border: 2px solid #fcd34d; }
+.hint-toggle { width: 100%; padding: 10px 16px; background: transparent; border: none; cursor: pointer; font-size: 14px; font-weight: 700; color: #92400e; text-align: left; display: flex; align-items: center; gap: 8px; }
+.hint-toggle:hover { background: #fef3c7; }
+.hint-content { padding: 0 16px; max-height: 0; overflow: hidden; transition: max-height 0.3s, padding 0.3s; font-size: 14px; color: #78350f; line-height: 1.5; }
+.hint-box.show .hint-content { padding: 0 16px 12px; max-height: 200px; }
+
+.next-btn {
+  margin-top: 20px; width: 100%; padding: 15px;
+  background: #ff6b6b; color: #fff; border: 3px solid #2d2d2d;
+  border-radius: 18px; font-size: 16px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 5px 0 #2d2d2d; transition: transform 0.12s;
+}
+.next-btn:hover { transform: translateY(-2px); }
+.next-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #2d2d2d; }
+.hidden { display: none !important; }
+
+.results { background: #fff; border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 14px 0 rgba(0,0,0,0.12); border: 4px solid #2d2d2d; display: none; }
+.results.active { display: block; }
+.results h2 { font-size: 30px; margin-bottom: 6px; color: #333; font-weight: 800; }
+.stars { font-size: 40px; margin: 14px 0; letter-spacing: 4px; }
+.results .score { font-size: 60px; font-weight: 800; color: #ff6b6b; margin: 10px 0; }
+.results .score-text { font-size: 17px; color: #666; margin-bottom: 26px; font-weight: 600; }
+.restart-btn {
+  padding: 15px 40px; background: #48dbfb; color: #103a45; border: 3px solid #2d2d2d;
+  border-radius: 18px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 5px 0 #2d2d2d;
+}
+.restart-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #2d2d2d; }
+
+.confetti-piece { position: fixed; top: -10px; width: 8px; height: 14px; opacity: 0.9; pointer-events: none; z-index: 999; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: 0.3; } }
+
+.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
+.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
+.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
+.frac-den { padding: 2px 4px 0; line-height: 1.2; }
+.sqrt { white-space: nowrap; }
+.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
+sup, sub { font-size: 0.75em; }
+sup { vertical-align: super; }
+sub { vertical-align: sub; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🎉 Scrum Quiz</h1>
+    <div class="meta">28 perguntas</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div id="quiz-container">
+        <div class="question" data-index="0">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 1 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Conforme a Definição do Scrum no Guia 2020, o que é essencialmente o Scrum?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Pense na simplicidade e na capacidade de lidar com a complexidade mencionadas logo no início do documento.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="O Guia do Scrum enfatiza que ele não fornece instruções detalhadas, mas regras que orientam relacionamentos e interações.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Uma metodologia detalhada com instruções passo a passo para o desenvolvimento de software.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Guia do Scrum enfatiza que ele não fornece instruções detalhadas, mas regras que orientam relacionamentos e interações.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="O Scrum é definido como uma estrutura propositalmente incompleta focada em problemas complexos e adaptabilidade.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Um framework leve que ajuda a gerar valor por meio de soluções adaptativas para problemas complexos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum é definido como uma estrutura propositalmente incompleta focada em problemas complexos e adaptabilidade.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="O Scrum se acopla às práticas existentes ou as torna desnecessárias, em vez de atuar como um substituto totalitário.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Uma estrutura imutável de gestão que substitui todos os processos organizacionais existentes.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum se acopla às práticas existentes ou as torna desnecessárias, em vez de atuar como um substituto totalitário.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Embora aumente a eficácia, o Scrum é focado na geração de valor e foi expandido para muitos domínios além do técnico.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Um processo de gerenciamento de projetos focado exclusivamente em produtividade técnica.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Embora aumente a eficácia, o Scrum é focado na geração de valor e foi expandido para muitos domínios além do técnico.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="1">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 2 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">O Scrum é fundamentado em quais dois conceitos principais?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere as bases que priorizam a observação dos fatos e a eficiência essencial.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="O modelo em cascata é geralmente o oposto da abordagem iterativa e incremental do Scrum.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Agilidade e cascata adaptativa.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O modelo em cascata é geralmente o oposto da abordagem iterativa e incremental do Scrum.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O Scrum prioriza o valor e a transparência em vez de se basear em documentação exaustiva.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Produtividade extrema e documentação detalhada.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum prioriza o valor e a transparência em vez de se basear em documentação exaustiva.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="O Scrum promove times autogerenciáveis e sem hierarquias internas, diferentemente da gestão clássica.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Gestão científica e hierarquia funcional.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum promove times autogerenciáveis e sem hierarquias internas, diferentemente da gestão clássica.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="O empirismo foca no conhecimento vindo da experiência e o lean thinking na redução de desperdícios.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Empirismo e lean thinking.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O empirismo foca no conhecimento vindo da experiência e o lean thinking na redução de desperdícios.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="2">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 3 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Quais são os três pilares que sustentam a implementação da teoria empírica no Scrum?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Reflita sobre o que é necessário para que as decisões sejam baseadas no estado real do trabalho.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Estes são atributos desejados, mas não constituem a base teórica de inspeção e ajuste do framework.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Velocidade, qualidade e agilidade.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Estes são atributos desejados, mas não constituem a base teórica de inspeção e ajuste do framework.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Embora presentes na rotina, esses termos não são os pilares formais do empirismo descritos no Guia.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Planejamento, execução e revisão.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Embora presentes na rotina, esses termos não são os pilares formais do empirismo descritos no Guia.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Estes são três dos cinco valores do Scrum, não os pilares empíricos da teoria.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Foco, coragem e compromisso.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Estes são três dos cinco valores do Scrum, não os pilares empíricos da teoria.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Esses três elementos permitem que o conhecimento baseado na experiência seja aplicado para controlar riscos e melhorar resultados.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Transparência, inspeção e adaptação.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esses três elementos permitem que o conhecimento baseado na experiência seja aplicado para controlar riscos e melhorar resultados.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="3">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 4 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Sobre o pilar da Transparência, qual afirmação está correta de acordo com o Guia?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere a relação de dependência entre ver o que está acontecendo e a capacidade de verificar problemas.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="No Scrum, a transparência baseia-se no estado percebido de seus três artefatos formais.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">A transparência é alcançada apenas através da entrega de relatórios de status semanais.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">No Scrum, a transparência baseia-se no estado percebido de seus três artefatos formais.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O trabalho deve ser visível tanto para quem o executa quanto para quem o recebe.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">A transparência é necessária apenas para os Stakeholders externos ao time.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O trabalho deve ser visível tanto para quem o executa quanto para quem o recebe.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="A visibilidade do processo e do trabalho é fundamental para que as decisões de adaptação sejam legítimas.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">A transparência permite a inspeção, pois a inspeção sem transparência é enganosa e gera desperdício.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A visibilidade do processo e do trabalho é fundamental para que as decisões de adaptação sejam legítimas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="O Product Backlog é emergente e pode ser refinado conforme necessário, independentemente da transparência.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">A transparência garante que o Product Backlog nunca seja alterado durante a Sprint.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Product Backlog é emergente e pode ser refinado conforme necessário, independentemente da transparência.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="4">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 5 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">O sucesso do uso do Scrum depende de as pessoas se tornarem proficientes em viver cinco valores. Quais são eles?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Lembre-se das qualidades humanas que reforçam a confiança dentro de uma unidade coesa.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Esta opção mistura os pilares empíricos com outros conceitos que não são os cinco valores formais.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Transparência, Inspeção, Adaptação, Valor e Honestidade.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta opção mistura os pilares empíricos com outros conceitos que não são os cinco valores formais.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Embora importantes, esses atributos não compõem a lista específica de valores definida no Guia.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Auto-organização, Rapidez, Eficácia, Pontualidade e Disciplina.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Embora importantes, esses atributos não compõem a lista específica de valores definida no Guia.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Estes são conceitos comuns no ágil, mas não são os valores específicos citados para o sucesso do Scrum.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Liderança, Colaboração, Feedback, Simplicidade e Entrega.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Estes são conceitos comuns no ágil, mas não são os valores específicos citados para o sucesso do Scrum.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Estes valores orientam o comportamento e as interações do Scrum Team para que os pilares empíricos ganhem vida.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Compromisso, Foco, Abertura, Respeito e Coragem.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Estes valores orientam o comportamento e as interações do Scrum Team para que os pilares empíricos ganhem vida.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="5">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 6 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Qual é a característica fundamental de um Scrum Team em relação à sua estrutura?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Foque na ideia de 'um time' e na ausência de distinções internas de poder.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="O Scrum Team é pequeno, multifuncional e autogerenciável, operando como um time único em direção à Meta do Produto.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">É uma unidade coesa de profissionais focada em um objetivo de cada vez, sem sub-times ou hierarquias.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum Team é pequeno, multifuncional e autogerenciável, operando como um time único em direção à Meta do Produto.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O Guia 2020 eliminou a distinção de 'times dentro do time' para evitar comportamentos de silos.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">É dividido em um time de desenvolvimento e um time de gestão liderado pelo Product Owner.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Guia 2020 eliminou a distinção de 'times dentro do time' para evitar comportamentos de silos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="O Guia sugere tipicamente 10 ou menos pessoas, mas o número exato é flexível para manter a agilidade.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Deve ser composto obrigatoriamente por 10 pessoas para garantir a produtividade.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Guia sugere tipicamente 10 ou menos pessoas, mas o número exato é flexível para manter a agilidade.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="O time é autogerenciável, o que significa que eles decidem internamente quem faz o quê, quando e como.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">É estruturado de forma que o Scrum Master tome as decisões técnicas e o Product Owner as decisões de negócio.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O time é autogerenciável, o que significa que eles decidem internamente quem faz o quê, quando e como.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="6">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 7 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Dentro do Scrum Team, qual é a responsabilidade específica dos Developers?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Pense em quem é o responsável direto pelo 'como' o trabalho será realizado durante o ciclo atual.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Os Developers são responsáveis pelo planejamento diário e pela criação do plano de trabalho da Sprint.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Criar um plano para a Sprint, o Sprint Backlog.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Os Developers são responsáveis pelo planejamento diário e pela criação do plano de trabalho da Sprint.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O Product Owner é o responsável por desenvolver e comunicar a Meta do Produto.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Definir a Meta do Produto a longo prazo.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Product Owner é o responsável por desenvolver e comunicar a Meta do Produto.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="A ordenação do Product Backlog é uma responsabilidade específica do Product Owner.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Ordenar os itens do Product Backlog para maximizar o valor.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A ordenação do Product Backlog é uma responsabilidade específica do Product Owner.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Remover impedimentos é uma das formas como o Scrum Master serve o time.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Remover impedimentos organizacionais ao progresso do time.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Remover impedimentos é uma das formas como o Scrum Master serve o time.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="7">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 8 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Como o Product Owner pode gerenciar o Product Backlog de forma eficaz?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">O foco desta responsabilidade está na clareza do que precisa ser feito e na priorização para o valor.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="O PO é o responsável final pela gestão do backlog, visando maximizar o valor resultante do trabalho do time.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Desenvolvendo e comunicando explicitamente a meta do produto e ordenando seus itens.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O PO é o responsável final pela gestão do backlog, visando maximizar o valor resultante do trabalho do time.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O Product Backlog é uma lista emergente que é refinada e ajustada continuamente.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Garantindo que o Product Backlog permaneça fixo e imutável após o planejamento.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Product Backlog é uma lista emergente que é refinada e ajustada continuamente.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Embora o PO represente as necessidades de muitos, ele é a autoridade única e suas decisões devem ser respeitadas.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Delegando a decisão final sobre as prioridades para os stakeholders mais influentes.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Embora o PO represente as necessidades de muitos, ele é a autoridade única e suas decisões devem ser respeitadas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="O time é autogerenciável; ninguém diz aos Developers como transformar itens do backlog em incrementos.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Atribuindo tarefas específicas para cada Developer no início da Sprint.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O time é autogerenciável; ninguém diz aos Developers como transformar itens do backlog em incrementos.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="8">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 9 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">O Scrum Master serve à organização de várias maneiras, incluindo:</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere como esse líder servidor influencia o ambiente ao redor do Scrum Team.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="As decisões técnicas sobre como criar o incremento pertencem aos Developers.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Decidir qual tecnologia deve ser usada para construir o incremento.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">As decisões técnicas sobre como criar o incremento pertencem aos Developers.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="O papel do Scrum Master se estende além do time, ajudando a organização a entender a abordagem empírica.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Liderar, treinar e orientar a organização na adoção do Scrum.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O papel do Scrum Master se estende além do time, ajudando a organização a entender a abordagem empírica.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="O Scrum Master não atua como um gerente de projetos tradicional que cobra prazos individuais.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Garantir que os Developers terminem todas as tarefas dentro do prazo estipulado pelo PO.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum Master não atua como um gerente de projetos tradicional que cobra prazos individuais.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="O Scrum Master facilita a colaboração, mas não substitui a responsabilidade do PO de representar o produto.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Substituir o Product Owner na comunicação com os stakeholders quando necessário.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum Master facilita a colaboração, mas não substitui a responsabilidade do PO de representar o produto.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="9">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 10 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Qual afirmação sobre a Sprint está correta?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Pense no conceito de 'batimento cardíaco' (heartbeat) do framework.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="As Sprints criam consistência através de ciclos contínuos de duração fixa de um mês ou menos.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Uma nova Sprint começa imediatamente após a conclusão da Sprint anterior.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">As Sprints criam consistência através de ciclos contínuos de duração fixa de um mês ou menos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O Scrum não prevê hiatos; o final de uma Sprint marca o início imediato da próxima.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Pode haver um intervalo entre Sprints para o time descansar e planejar o futuro.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum não prevê hiatos; o final de uma Sprint marca o início imediato da próxima.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="As Sprints possuem duração fixa para criar cadência e previsibilidade.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">A duração da Sprint pode variar dependendo da complexidade do trabalho selecionado.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">As Sprints possuem duração fixa para criar cadência e previsibilidade.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Durante a Sprint, nenhuma mudança é feita que coloque em risco a meta da Sprint.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Mudanças que coloquem em risco a meta da Sprint podem ser feitas livremente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Durante a Sprint, nenhuma mudança é feita que coloque em risco a meta da Sprint.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="10">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 11 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Durante a Sprint Planning, o que compõe o 'Tópico Um' de discussão?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Trata-se da razão de ser daquele ciclo de trabalho específico.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="O planejamento foca no trabalho da Sprint atual e na Meta da Sprint, não na logística da Review.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Quais stakeholders devem ser convidados para a Review?</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O planejamento foca no trabalho da Sprint atual e na Meta da Sprint, não na logística da Review.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="O Product Owner propõe como o valor pode ser aumentado e o time colabora para definir a Meta da Sprint.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Por que esta Sprint é valiosa?</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Product Owner propõe como o valor pode ser aumentado e o time colabora para definir a Meta da Sprint.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="A distribuição detalhada de tarefas é parte do 'Como' e é decidida internamente pelos Developers.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Quem fará cada tarefa técnica?</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A distribuição detalhada de tarefas é parte do 'Como' e é decidida internamente pelos Developers.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="O dimensionamento é feito pelos Developers, mas o foco do Tópico Um é o valor estratégico.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Quantas horas cada item levará para ser concluído?</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O dimensionamento é feito pelos Developers, mas o foco do Tópico Um é o valor estratégico.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="11">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 12 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Quem são os participantes obrigatórios da Daily Scrum?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Lembre-se de quem é responsável pelo plano de trabalho diário em direção à meta.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="O PO e o SM participam apenas se estiverem atuando ativamente em itens do Sprint Backlog.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">O Product Owner e o Scrum Master apenas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O PO e o SM participam apenas se estiverem atuando ativamente em itens do Sprint Backlog.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="A Daily Scrum é um evento de 15 minutos exclusivo para os Developers inspecionarem o progresso.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Os Developers.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A Daily Scrum é um evento de 15 minutos exclusivo para os Developers inspecionarem o progresso.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="A Daily não é uma reunião de status para o SM, mas um momento de autogerenciamento dos Developers.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Apenas o Scrum Master, para coletar os status das tarefas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A Daily não é uma reunião de status para o SM, mas um momento de autogerenciamento dos Developers.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Stakeholders não participam da Daily; é uma reunião interna focada no plano de ação diário.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">O Scrum Team completo e os Stakeholders interessados.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Stakeholders não participam da Daily; é uma reunião interna focada no plano de ação diário.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="12">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 13 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Qual é o objetivo principal da Sprint Review?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere o envolvimento dos Stakeholders no final do ciclo.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="O Scrum baseia-se em valores como respeito e aprendizado, não em punição por variações.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Punir o time caso a meta da Sprint não tenha sido atingida.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum baseia-se em valores como respeito e aprendizado, não em punição por variações.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O Guia recomenda evitar limitar a Review a uma simples apresentação, priorizando a colaboração.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Realizar uma apresentação de slides detalhando o progresso do projeto.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Guia recomenda evitar limitar a Review a uma simples apresentação, priorizando a colaboração.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="O Scrum foca no valor e no incremento, não no controle de horas trabalhadas.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Aprovar formalmente as horas trabalhadas pelos Developers.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum foca no valor e no incremento, não no controle de horas trabalhadas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="É uma sessão de trabalho onde o time e stakeholders colaboram sobre o que foi feito e o que fazer a seguir.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Inspecionar o resultado da Sprint e determinar as adaptações futuras.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">É uma sessão de trabalho onde o time e stakeholders colaboram sobre o que foi feito e o que fazer a seguir.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="13">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 14 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Na Sprint Retrospective, o que o Scrum Team inspeciona?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Pense no momento de olhar para dentro do time para melhorar como o trabalho é feito.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="O foco é identificar melhorias na qualidade e eficácia do time para a próxima Sprint.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Como foi a última Sprint em relação a indivíduos, interações, processos, ferramentas e a Definição de Pronto.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O foco é identificar melhorias na qualidade e eficácia do time para a próxima Sprint.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Embora importante para o PO, a Retrospectiva foca na operação interna e eficácia do time.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">A viabilidade financeira do produto no mercado atual.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Embora importante para o PO, a Retrospectiva foca na operação interna e eficácia do time.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="A adaptação do Product Backlog com stakeholders ocorre principalmente na Sprint Review.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Os novos itens que os stakeholders desejam adicionar ao Product Backlog.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A adaptação do Product Backlog com stakeholders ocorre principalmente na Sprint Review.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="O Scrum Team é avaliado como uma unidade; a Retrospectiva foca em processos e colaboração, não em RH.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">A performance individual de cada membro para fins de promoção.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum Team é avaliado como uma unidade; a Retrospectiva foca em processos e colaboração, não em RH.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="14">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 15 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Cada artefato do Scrum contém um 'compromisso'. Qual é o compromisso associado ao Sprint Backlog?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">O compromisso de um artefato serve para garantir foco e transparência no progresso daquele plano específico.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Ferramentas como burn-downs são práticas complementares, mas não são compromissos formais do framework.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">O Gráfico de Burn-down.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ferramentas como burn-downs são práticas complementares, mas não são compromissos formais do framework.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="A Definição de Pronto é o compromisso associado ao Incremento.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">A Definição de Pronto.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A Definição de Pronto é o compromisso associado ao Incremento.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="A Meta da Sprint fornece o foco e a razão para o trabalho planejado no Sprint Backlog.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">A Meta da Sprint.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A Meta da Sprint fornece o foco e a razão para o trabalho planejado no Sprint Backlog.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="A Meta do Produto é o compromisso associado ao Product Backlog.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">A Meta do Produto.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A Meta do Produto é o compromisso associado ao Product Backlog.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="15">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 16 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">O que define um Incremento segundo o Guia do Scrum?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere o resultado prático e verificado do trabalho ao final de uma Sprint.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="No Scrum, valor é gerado através de soluções funcionais, não apenas documentação.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Um documento de requisitos aprovado pelo Product Owner.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">No Scrum, valor é gerado através de soluções funcionais, não apenas documentação.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Cada incremento é somado aos anteriores e deve ser utilizável para fornecer valor imediato.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Um trampolim concreto em direção à Meta do Produto que deve atender à Definição de Pronto.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Cada incremento é somado aos anteriores e deve ser utilizável para fornecer valor imediato.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Para fornecer valor, o incremento deve ser utilizável, mesmo que não seja liberado imediatamente.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Uma versão de teste do software que ainda não pode ser usada.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Para fornecer valor, o incremento deve ser utilizável, mesmo que não seja liberado imediatamente.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Trabalho que não atende à Definição de Pronto não pode ser considerado parte de um incremento.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">A soma de todas as tarefas concluídas, independentemente da qualidade.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Trabalho que não atende à Definição de Pronto não pode ser considerado parte de um incremento.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="16">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 17 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Se um item do Product Backlog não atender à Definição de Pronto, o que deve ser feito com ele?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Reflita sobre como o framework mantém a integridade da qualidade do que é mostrado aos stakeholders.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Itens que não atendem à Definição de Pronto não podem ser apresentados na Sprint Review.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Ele deve ser apresentado na Review com uma ressalva sobre o que falta.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Itens que não atendem à Definição de Pronto não podem ser apresentados na Sprint Review.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Isso garante a transparência sobre o que está realmente concluído e utilizável.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Ele retorna ao Product Backlog para consideração futura e não pode ser apresentado na Review.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Isso garante a transparência sobre o que está realmente concluído e utilizável.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="A Definição de Pronto é um padrão de qualidade que deve ser estritamente cumprido pelos Developers.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">O Scrum Master deve decidir se o item pode ser considerado 'pronto o suficiente'.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A Definição de Pronto é um padrão de qualidade que deve ser estritamente cumprido pelos Developers.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="O item volta para o backlog para ser reavaliado; o Scrum é um processo de aprendizado contínuo.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Ele é descartado permanentemente, pois o time falhou na Sprint.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O item volta para o backlog para ser reavaliado; o Scrum é um processo de aprendizado contínuo.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="17">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 18 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">De quem é a autoridade exclusiva para cancelar uma Sprint?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Pense no papel responsável pelo valor do produto e pela direção do negócio.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Stakeholders influenciam o PO, mas a autoridade final dentro do framework é do Product Owner.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Dos Stakeholders principais após análise de custos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Stakeholders influenciam o PO, mas a autoridade final dentro do framework é do Product Owner.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O SM garante o processo, mas não tem autoridade sobre o cancelamento do ciclo de negócio.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Do Scrum Master, para proteger o time de pressão externa.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O SM garante o processo, mas não tem autoridade sobre o cancelamento do ciclo de negócio.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="O PO toma essa decisão se a Meta da Sprint se tornar obsoleta.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Do Product Owner.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O PO toma essa decisão se a Meta da Sprint se tornar obsoleta.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Embora o time colabore, a autoridade para cancelamento é atribuída apenas ao Product Owner.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Dos Developers, através de votação majoritária.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Embora o time colabore, a autoridade para cancelamento é atribuída apenas ao Product Owner.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="18">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 19 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Sobre o refinamento do Product Backlog, o que o Guia do Scrum afirma?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Trata-se do ato de preparar o trabalho futuro enquanto o atual está sendo executado.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="É uma atividade colaborativa, e os Developers são responsáveis pelo dimensionamento.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Deve ser feito exclusivamente pelo Product Owner antes da Sprint Planning.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">É uma atividade colaborativa, e os Developers são responsáveis pelo dimensionamento.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O refinamento aumenta a transparência e a confiança necessária para o planejamento eficaz.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Não é necessário se o time for experiente e conhecer bem o produto.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O refinamento aumenta a transparência e a confiança necessária para o planejamento eficaz.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="O refinamento não é um dos eventos formais, mas uma atividade contínua durante a Sprint.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">É um evento formal do Scrum com timebox de 4 horas por semana.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O refinamento não é um dos eventos formais, mas uma atividade contínua durante a Sprint.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="O refinamento quebra itens em partes menores e mais precisas para que estejam prontos para seleção.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">É uma atividade contínua para adicionar detalhes, como descrição, ordem e tamanho aos itens.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O refinamento quebra itens em partes menores e mais precisas para que estejam prontos para seleção.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="19">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 20 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">O que significa dizer que o Scrum Team é 'multifuncional'?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Pense na autossuficiência do grupo para entregar um incremento pronto.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Multifuncionalidade refere-se ao time como um todo, não necessariamente a indivíduos 'generalistas extremos'.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Cada membro do time deve ser especialista em todas as áreas técnicas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Multifuncionalidade refere-se ao time como um todo, não necessariamente a indivíduos 'generalistas extremos'.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O Scrum Team foca em um objetivo de cada vez, a Meta do Produto.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">O time trabalha em múltiplas metas de produto simultaneamente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum Team foca em um objetivo de cada vez, a Meta do Produto.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Multifuncionalidade trata de competências técnicas/profissionais necessárias para a entrega, não de troca de papéis.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">O time pode mudar de função (ex: SM vira PO) a qualquer momento.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Multifuncionalidade trata de competências técnicas/profissionais necessárias para a entrega, não de troca de papéis.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="O time não depende de pessoas externas para completar o trabalho definido para a Sprint.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Os membros possuem todas as habilidades necessárias para criar valor a cada Sprint.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O time não depende de pessoas externas para completar o trabalho definido para a Sprint.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="20">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 21 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Qual é a relação entre a Meta da Sprint e o trabalho planejado pelos Developers?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere o equilíbrio entre ter um objetivo claro e a realidade de ambientes complexos.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Se o trabalho for diferente do esperado, o time negocia o escopo com o PO sem afetar a meta.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">A Meta da Sprint é o único objetivo da Sprint, mas oferece flexibilidade sobre o trabalho exato necessário.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Se o trabalho for diferente do esperado, o time negocia o escopo com o PO sem afetar a meta.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O plano é adaptável; o compromisso principal é com a meta, não com a lista inicial de tarefas.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">O trabalho planejado deve ser seguido à risca, mesmo que a meta mude.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O plano é adaptável; o compromisso principal é com a meta, não com a lista inicial de tarefas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="A Meta da Sprint é definida de forma colaborativa durante o Tópico Um da Sprint Planning.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">A Meta da Sprint é definida após os Developers escolherem as tarefas técnicas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A Meta da Sprint é definida de forma colaborativa durante o Tópico Um da Sprint Planning.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="A meta cria coerência e foco, sendo o guia fundamental para o trabalho do time durante todo o ciclo.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">A Meta da Sprint só é importante se houver tempo sobrando na Sprint.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A meta cria coerência e foco, sendo o guia fundamental para o trabalho do time durante todo o ciclo.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="21">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 22 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Em relação a múltiplos Scrum Teams trabalhando no mesmo produto, qual a regra sobre a Definição de Pronto?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Pense na necessidade de consistência quando várias partes formam um único produto.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="A definição deve ser mútua ou seguir os padrões da organização.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">A Definição de Pronto deve ser ditada apenas pelo time mais antigo.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A definição deve ser mútua ou seguir os padrões da organização.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="A DoD é um compromisso essencial para a transparência do incremento.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Não é necessário uma Definição de Pronto se os times conversarem diariamente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A DoD é um compromisso essencial para a transparência do incremento.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Embora autogerenciáveis, a integração do produto exige um padrão de qualidade comum.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Cada time deve ter sua própria Definição de Pronto para respeitar sua autonomia.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Embora autogerenciáveis, a integração do produto exige um padrão de qualidade comum.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Isso garante que os incrementos produzidos por diferentes times sejam compatíveis e integráveis.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Eles devem definir e cumprir mutuamente a mesma Definição de Pronto.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Isso garante que os incrementos produzidos por diferentes times sejam compatíveis e integráveis.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="22">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 23 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">O que aconteceu com a terminologia 'Auto-organizados' no Guia Scrum 2020?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Essa mudança aumentou o escopo da autonomia do time sobre o trabalho.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="O Scrum mantém seu foco na ausência de hierarquias internas no time.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Foi substituída por 'Hierarquia Adaptativa' para melhor controle organizacional.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum mantém seu foco na ausência de hierarquias internas no time.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="A mudança visa dar mais autonomia e responsabilidade ao Scrum Team sobre o seu próprio destino.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Foi substituída por 'Autogerenciáveis', enfatizando que o time decide quem, como e no que trabalhar.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A mudança visa dar mais autonomia e responsabilidade ao Scrum Team sobre o seu próprio destino.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="O SM continua sendo um líder que serve, não um gerente de comando e controle.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Foi removida para dar mais autoridade de comando ao Scrum Master.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O SM continua sendo um líder que serve, não um gerente de comando e controle.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="O conceito de autogerenciamento agora se aplica a todo o Scrum Team.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Foi mantida apenas para os Developers, excluindo o Product Owner.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O conceito de autogerenciamento agora se aplica a todo o Scrum Team.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="23">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 24 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Qual o limite de tempo (timebox) sugerido para a Sprint Retrospective em uma Sprint de um mês?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">É o evento que conclui a Sprint, geralmente mais curto que o planejamento e a revisão.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="1 hora pode ser insuficiente para uma retrospectiva profunda de um mês de trabalho.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Máximo de 1 hora.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">1 hora pode ser insuficiente para uma retrospectiva profunda de um mês de trabalho.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="8 horas é o timebox sugerido para o planejamento (Sprint Planning), não para a retrospectiva.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Máximo de 8 horas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">8 horas é o timebox sugerido para o planejamento (Sprint Planning), não para a retrospectiva.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Todos os eventos do Scrum possuem timeboxes para garantir foco e regularidade.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Não há limite, o time deve discutir até resolver todos os problemas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Todos os eventos do Scrum possuem timeboxes para garantir foco e regularidade.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Para Sprints mais curtas, o evento geralmente é proporcionalmente menor.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Máximo de 3 horas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Para Sprints mais curtas, o evento geralmente é proporcionalmente menor.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="24">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 25 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Sobre o Product Backlog, o que significa ele ser 'emergente'?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Pense na natureza de uma lista que nunca termina enquanto o produto existir.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Embora novos itens surjam, eles são gerenciados e ordenados pelo PO no backlog.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Significa que seus itens surgem aleatoriamente durante a execução da Sprint.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Embora novos itens surjam, eles são gerenciados e ordenados pelo PO no backlog.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O Scrum rejeita backlogs congelados, favorecendo o empirismo e a adaptação.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Significa que ele é criado rapidamente no início do projeto e depois congelado.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum rejeita backlogs congelados, favorecendo o empirismo e a adaptação.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="O backlog é a fonte única e constante de trabalho para o time.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Significa que ele só deve ser consultado em casos de emergência no projeto.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O backlog é a fonte única e constante de trabalho para o time.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="O backlog é uma lista dinâmica que reflete o que é necessário para melhorar o produto em cada momento.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Significa que ele evolui conforme o produto e o ambiente mudam, nunca estando completo.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O backlog é uma lista dinâmica que reflete o que é necessário para melhorar o produto em cada momento.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="25">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 26 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">No Scrum, quem é responsável por transformar itens do Product Backlog em incrementos de valor?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere a unidade fundamental descrita como responsável por todas as atividades do produto.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Embora os Developers façam o trabalho técnico, todo o Scrum Team é responsável pela criação de um incremento valioso a cada Sprint.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">O Scrum Team.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Embora os Developers façam o trabalho técnico, todo o Scrum Team é responsável pela criação de um incremento valioso a cada Sprint.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O Scrum não define o papel de Gerente de Projetos; o time é empoderado para gerenciar seu próprio trabalho.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">O Gerente de Projetos externo ao time.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum não define o papel de Gerente de Projetos; o time é empoderado para gerenciar seu próprio trabalho.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="O PO ordena o trabalho e define o valor, mas não é o único responsável pela criação física do incremento.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Apenas o Product Owner.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O PO ordena o trabalho e define o valor, mas não é o único responsável pela criação física do incremento.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Stakeholders fornecem feedback e necessidades, mas não fazem parte do time que executa o trabalho.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">Apenas os Stakeholders.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Stakeholders fornecem feedback e necessidades, mas não fazem parte do time que executa o trabalho.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="26">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 27 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">Como o Guia do Scrum descreve a relação entre o Scrum e outras práticas ou métodos?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Lembre-se da nota final que fala sobre a imutabilidade do framework mas sua flexibilidade como invólucro.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="O Scrum é independente de outros métodos, embora possa ser usado com eles.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">O Scrum só funciona se for combinado exclusivamente com o método Kanban.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum é independente de outros métodos, embora possa ser usado com eles.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="O Guia incentiva o uso de vários processos e métodos dentro do framework.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">O Scrum proíbe o uso de qualquer técnica que não esteja explicitamente no Guia.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Guia incentiva o uso de vários processos e métodos dentro do framework.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="O framework é propositalmente incompleto para que processos específicos possam ser acoplados a ele.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">O Scrum funciona como um contêiner para outras técnicas, metodologias e práticas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O framework é propositalmente incompleto para que processos específicos possam ser acoplados a ele.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="O Scrum é um framework, não uma metodologia completa, e ele integra práticas existentes.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">O Scrum é uma metodologia completa que torna outras práticas obsoletas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">O Scrum é um framework, não uma metodologia completa, e ele integra práticas existentes.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      
+        <div class="question" data-index="27">
+          <div class="q-header">
+            <span class="q-number">🎯 Pergunta 28 / 28</span>
+            <span class="streak" id="streak-badge"></span>
+          </div>
+          <div class="q-text">O que o compromisso da 'Meta do Produto' representa para o Scrum Team?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Pense no norte magnético que guia as sucessivas Sprints em direção a um valor maior.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Ela fornece um alvo claro para o planejamento do Product Backlog e para a evolução do produto.">
+            <span class="opt-emoji">🅰️</span>
+            <span class="opt-text">Um objetivo de longo prazo que o time deve cumprir (ou abandonar) antes de assumir o próximo.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ela fornece um alvo claro para o planejamento do Product Backlog e para a evolução do produto.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="A Meta do Produto está no Product Backlog e é de responsabilidade do Product Owner.">
+            <span class="opt-emoji">🅱️</span>
+            <span class="opt-text">Um slogan de marketing definido pelos stakeholders externos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A Meta do Produto está no Product Backlog e é de responsabilidade do Product Owner.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="A Meta do Produto é um estado futuro alvo, não uma lista detalhada e estática de funcionalidades.">
+            <span class="opt-emoji">🅲️</span>
+            <span class="opt-text">Uma lista de todos os recursos que o produto terá nos próximos dois anos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A Meta do Produto é um estado futuro alvo, não uma lista detalhada e estática de funcionalidades.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="A meta para a Sprint atual é a Meta da Sprint; a Meta do Produto é de horizonte mais longo.">
+            <span class="opt-emoji">🅳️</span>
+            <span class="opt-text">O conjunto de tarefas técnicas que devem ser feitas na Sprint atual.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A meta para a Sprint atual é a Meta da Sprint; a Meta do Produto é de horizonte mais longo.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Próxima pergunta →</button>
+        </div>
+      </div>
+  <div class="results" id="results">
+    <h2>Questionário concluído!</h2>
+    <div class="stars" id="stars"></div>
+    <div class="score" id="score">0%</div>
+    <div class="score-text" id="score-text"></div>
+    <button class="restart-btn" onclick="restart()">🔁 Tentar novamente</button>
+  </div>
+</div>
+<script>
+const quizData = [{"question":"Conforme a Definição do Scrum no Guia 2020, o que é essencialmente o Scrum?","hint":"Pense na simplicidade e na capacidade de lidar com a complexidade mencionadas logo no início do documento.","options":[{"label":"A","text":"Uma metodologia detalhada com instruções passo a passo para o desenvolvimento de software.","isCorrect":false,"rationale":"O Guia do Scrum enfatiza que ele não fornece instruções detalhadas, mas regras que orientam relacionamentos e interações."},{"label":"B","text":"Um framework leve que ajuda a gerar valor por meio de soluções adaptativas para problemas complexos.","isCorrect":true,"rationale":"O Scrum é definido como uma estrutura propositalmente incompleta focada em problemas complexos e adaptabilidade."},{"label":"C","text":"Uma estrutura imutável de gestão que substitui todos os processos organizacionais existentes.","isCorrect":false,"rationale":"O Scrum se acopla às práticas existentes ou as torna desnecessárias, em vez de atuar como um substituto totalitário."},{"label":"D","text":"Um processo de gerenciamento de projetos focado exclusivamente em produtividade técnica.","isCorrect":false,"rationale":"Embora aumente a eficácia, o Scrum é focado na geração de valor e foi expandido para muitos domínios além do técnico."}]},{"question":"O Scrum é fundamentado em quais dois conceitos principais?","hint":"Considere as bases que priorizam a observação dos fatos e a eficiência essencial.","options":[{"label":"A","text":"Agilidade e cascata adaptativa.","isCorrect":false,"rationale":"O modelo em cascata é geralmente o oposto da abordagem iterativa e incremental do Scrum."},{"label":"B","text":"Produtividade extrema e documentação detalhada.","isCorrect":false,"rationale":"O Scrum prioriza o valor e a transparência em vez de se basear em documentação exaustiva."},{"label":"C","text":"Gestão científica e hierarquia funcional.","isCorrect":false,"rationale":"O Scrum promove times autogerenciáveis e sem hierarquias internas, diferentemente da gestão clássica."},{"label":"D","text":"Empirismo e lean thinking.","isCorrect":true,"rationale":"O empirismo foca no conhecimento vindo da experiência e o lean thinking na redução de desperdícios."}]},{"question":"Quais são os três pilares que sustentam a implementação da teoria empírica no Scrum?","hint":"Reflita sobre o que é necessário para que as decisões sejam baseadas no estado real do trabalho.","options":[{"label":"A","text":"Velocidade, qualidade e agilidade.","isCorrect":false,"rationale":"Estes são atributos desejados, mas não constituem a base teórica de inspeção e ajuste do framework."},{"label":"B","text":"Planejamento, execução e revisão.","isCorrect":false,"rationale":"Embora presentes na rotina, esses termos não são os pilares formais do empirismo descritos no Guia."},{"label":"C","text":"Foco, coragem e compromisso.","isCorrect":false,"rationale":"Estes são três dos cinco valores do Scrum, não os pilares empíricos da teoria."},{"label":"D","text":"Transparência, inspeção e adaptação.","isCorrect":true,"rationale":"Esses três elementos permitem que o conhecimento baseado na experiência seja aplicado para controlar riscos e melhorar resultados."}]},{"question":"Sobre o pilar da Transparência, qual afirmação está correta de acordo com o Guia?","hint":"Considere a relação de dependência entre ver o que está acontecendo e a capacidade de verificar problemas.","options":[{"label":"A","text":"A transparência é alcançada apenas através da entrega de relatórios de status semanais.","isCorrect":false,"rationale":"No Scrum, a transparência baseia-se no estado percebido de seus três artefatos formais."},{"label":"B","text":"A transparência é necessária apenas para os Stakeholders externos ao time.","isCorrect":false,"rationale":"O trabalho deve ser visível tanto para quem o executa quanto para quem o recebe."},{"label":"C","text":"A transparência permite a inspeção, pois a inspeção sem transparência é enganosa e gera desperdício.","isCorrect":true,"rationale":"A visibilidade do processo e do trabalho é fundamental para que as decisões de adaptação sejam legítimas."},{"label":"D","text":"A transparência garante que o Product Backlog nunca seja alterado durante a Sprint.","isCorrect":false,"rationale":"O Product Backlog é emergente e pode ser refinado conforme necessário, independentemente da transparência."}]},{"question":"O sucesso do uso do Scrum depende de as pessoas se tornarem proficientes em viver cinco valores. Quais são eles?","hint":"Lembre-se das qualidades humanas que reforçam a confiança dentro de uma unidade coesa.","options":[{"label":"A","text":"Transparência, Inspeção, Adaptação, Valor e Honestidade.","isCorrect":false,"rationale":"Esta opção mistura os pilares empíricos com outros conceitos que não são os cinco valores formais."},{"label":"B","text":"Auto-organização, Rapidez, Eficácia, Pontualidade e Disciplina.","isCorrect":false,"rationale":"Embora importantes, esses atributos não compõem a lista específica de valores definida no Guia."},{"label":"C","text":"Liderança, Colaboração, Feedback, Simplicidade e Entrega.","isCorrect":false,"rationale":"Estes são conceitos comuns no ágil, mas não são os valores específicos citados para o sucesso do Scrum."},{"label":"D","text":"Compromisso, Foco, Abertura, Respeito e Coragem.","isCorrect":true,"rationale":"Estes valores orientam o comportamento e as interações do Scrum Team para que os pilares empíricos ganhem vida."}]},{"question":"Qual é a característica fundamental de um Scrum Team em relação à sua estrutura?","hint":"Foque na ideia de 'um time' e na ausência de distinções internas de poder.","options":[{"label":"A","text":"É uma unidade coesa de profissionais focada em um objetivo de cada vez, sem sub-times ou hierarquias.","isCorrect":true,"rationale":"O Scrum Team é pequeno, multifuncional e autogerenciável, operando como um time único em direção à Meta do Produto."},{"label":"B","text":"É dividido em um time de desenvolvimento e um time de gestão liderado pelo Product Owner.","isCorrect":false,"rationale":"O Guia 2020 eliminou a distinção de 'times dentro do time' para evitar comportamentos de silos."},{"label":"C","text":"Deve ser composto obrigatoriamente por 10 pessoas para garantir a produtividade.","isCorrect":false,"rationale":"O Guia sugere tipicamente 10 ou menos pessoas, mas o número exato é flexível para manter a agilidade."},{"label":"D","text":"É estruturado de forma que o Scrum Master tome as decisões técnicas e o Product Owner as decisões de negócio.","isCorrect":false,"rationale":"O time é autogerenciável, o que significa que eles decidem internamente quem faz o quê, quando e como."}]},{"question":"Dentro do Scrum Team, qual é a responsabilidade específica dos Developers?","hint":"Pense em quem é o responsável direto pelo 'como' o trabalho será realizado durante o ciclo atual.","options":[{"label":"A","text":"Criar um plano para a Sprint, o Sprint Backlog.","isCorrect":true,"rationale":"Os Developers são responsáveis pelo planejamento diário e pela criação do plano de trabalho da Sprint."},{"label":"B","text":"Definir a Meta do Produto a longo prazo.","isCorrect":false,"rationale":"O Product Owner é o responsável por desenvolver e comunicar a Meta do Produto."},{"label":"C","text":"Ordenar os itens do Product Backlog para maximizar o valor.","isCorrect":false,"rationale":"A ordenação do Product Backlog é uma responsabilidade específica do Product Owner."},{"label":"D","text":"Remover impedimentos organizacionais ao progresso do time.","isCorrect":false,"rationale":"Remover impedimentos é uma das formas como o Scrum Master serve o time."}]},{"question":"Como o Product Owner pode gerenciar o Product Backlog de forma eficaz?","hint":"O foco desta responsabilidade está na clareza do que precisa ser feito e na priorização para o valor.","options":[{"label":"A","text":"Desenvolvendo e comunicando explicitamente a meta do produto e ordenando seus itens.","isCorrect":true,"rationale":"O PO é o responsável final pela gestão do backlog, visando maximizar o valor resultante do trabalho do time."},{"label":"B","text":"Garantindo que o Product Backlog permaneça fixo e imutável após o planejamento.","isCorrect":false,"rationale":"O Product Backlog é uma lista emergente que é refinada e ajustada continuamente."},{"label":"C","text":"Delegando a decisão final sobre as prioridades para os stakeholders mais influentes.","isCorrect":false,"rationale":"Embora o PO represente as necessidades de muitos, ele é a autoridade única e suas decisões devem ser respeitadas."},{"label":"D","text":"Atribuindo tarefas específicas para cada Developer no início da Sprint.","isCorrect":false,"rationale":"O time é autogerenciável; ninguém diz aos Developers como transformar itens do backlog em incrementos."}]},{"question":"O Scrum Master serve à organização de várias maneiras, incluindo:","hint":"Considere como esse líder servidor influencia o ambiente ao redor do Scrum Team.","options":[{"label":"A","text":"Decidir qual tecnologia deve ser usada para construir o incremento.","isCorrect":false,"rationale":"As decisões técnicas sobre como criar o incremento pertencem aos Developers."},{"label":"B","text":"Liderar, treinar e orientar a organização na adoção do Scrum.","isCorrect":true,"rationale":"O papel do Scrum Master se estende além do time, ajudando a organização a entender a abordagem empírica."},{"label":"C","text":"Garantir que os Developers terminem todas as tarefas dentro do prazo estipulado pelo PO.","isCorrect":false,"rationale":"O Scrum Master não atua como um gerente de projetos tradicional que cobra prazos individuais."},{"label":"D","text":"Substituir o Product Owner na comunicação com os stakeholders quando necessário.","isCorrect":false,"rationale":"O Scrum Master facilita a colaboração, mas não substitui a responsabilidade do PO de representar o produto."}]},{"question":"Qual afirmação sobre a Sprint está correta?","hint":"Pense no conceito de 'batimento cardíaco' (heartbeat) do framework.","options":[{"label":"A","text":"Uma nova Sprint começa imediatamente após a conclusão da Sprint anterior.","isCorrect":true,"rationale":"As Sprints criam consistência através de ciclos contínuos de duração fixa de um mês ou menos."},{"label":"B","text":"Pode haver um intervalo entre Sprints para o time descansar e planejar o futuro.","isCorrect":false,"rationale":"O Scrum não prevê hiatos; o final de uma Sprint marca o início imediato da próxima."},{"label":"C","text":"A duração da Sprint pode variar dependendo da complexidade do trabalho selecionado.","isCorrect":false,"rationale":"As Sprints possuem duração fixa para criar cadência e previsibilidade."},{"label":"D","text":"Mudanças que coloquem em risco a meta da Sprint podem ser feitas livremente.","isCorrect":false,"rationale":"Durante a Sprint, nenhuma mudança é feita que coloque em risco a meta da Sprint."}]},{"question":"Durante a Sprint Planning, o que compõe o 'Tópico Um' de discussão?","hint":"Trata-se da razão de ser daquele ciclo de trabalho específico.","options":[{"label":"A","text":"Quais stakeholders devem ser convidados para a Review?","isCorrect":false,"rationale":"O planejamento foca no trabalho da Sprint atual e na Meta da Sprint, não na logística da Review."},{"label":"B","text":"Por que esta Sprint é valiosa?","isCorrect":true,"rationale":"O Product Owner propõe como o valor pode ser aumentado e o time colabora para definir a Meta da Sprint."},{"label":"C","text":"Quem fará cada tarefa técnica?","isCorrect":false,"rationale":"A distribuição detalhada de tarefas é parte do 'Como' e é decidida internamente pelos Developers."},{"label":"D","text":"Quantas horas cada item levará para ser concluído?","isCorrect":false,"rationale":"O dimensionamento é feito pelos Developers, mas o foco do Tópico Um é o valor estratégico."}]},{"question":"Quem são os participantes obrigatórios da Daily Scrum?","hint":"Lembre-se de quem é responsável pelo plano de trabalho diário em direção à meta.","options":[{"label":"A","text":"O Product Owner e o Scrum Master apenas.","isCorrect":false,"rationale":"O PO e o SM participam apenas se estiverem atuando ativamente em itens do Sprint Backlog."},{"label":"B","text":"Os Developers.","isCorrect":true,"rationale":"A Daily Scrum é um evento de 15 minutos exclusivo para os Developers inspecionarem o progresso."},{"label":"C","text":"Apenas o Scrum Master, para coletar os status das tarefas.","isCorrect":false,"rationale":"A Daily não é uma reunião de status para o SM, mas um momento de autogerenciamento dos Developers."},{"label":"D","text":"O Scrum Team completo e os Stakeholders interessados.","isCorrect":false,"rationale":"Stakeholders não participam da Daily; é uma reunião interna focada no plano de ação diário."}]},{"question":"Qual é o objetivo principal da Sprint Review?","hint":"Considere o envolvimento dos Stakeholders no final do ciclo.","options":[{"label":"A","text":"Punir o time caso a meta da Sprint não tenha sido atingida.","isCorrect":false,"rationale":"O Scrum baseia-se em valores como respeito e aprendizado, não em punição por variações."},{"label":"B","text":"Realizar uma apresentação de slides detalhando o progresso do projeto.","isCorrect":false,"rationale":"O Guia recomenda evitar limitar a Review a uma simples apresentação, priorizando a colaboração."},{"label":"C","text":"Aprovar formalmente as horas trabalhadas pelos Developers.","isCorrect":false,"rationale":"O Scrum foca no valor e no incremento, não no controle de horas trabalhadas."},{"label":"D","text":"Inspecionar o resultado da Sprint e determinar as adaptações futuras.","isCorrect":true,"rationale":"É uma sessão de trabalho onde o time e stakeholders colaboram sobre o que foi feito e o que fazer a seguir."}]},{"question":"Na Sprint Retrospective, o que o Scrum Team inspeciona?","hint":"Pense no momento de olhar para dentro do time para melhorar como o trabalho é feito.","options":[{"label":"A","text":"Como foi a última Sprint em relação a indivíduos, interações, processos, ferramentas e a Definição de Pronto.","isCorrect":true,"rationale":"O foco é identificar melhorias na qualidade e eficácia do time para a próxima Sprint."},{"label":"B","text":"A viabilidade financeira do produto no mercado atual.","isCorrect":false,"rationale":"Embora importante para o PO, a Retrospectiva foca na operação interna e eficácia do time."},{"label":"C","text":"Os novos itens que os stakeholders desejam adicionar ao Product Backlog.","isCorrect":false,"rationale":"A adaptação do Product Backlog com stakeholders ocorre principalmente na Sprint Review."},{"label":"D","text":"A performance individual de cada membro para fins de promoção.","isCorrect":false,"rationale":"O Scrum Team é avaliado como uma unidade; a Retrospectiva foca em processos e colaboração, não em RH."}]},{"question":"Cada artefato do Scrum contém um 'compromisso'. Qual é o compromisso associado ao Sprint Backlog?","hint":"O compromisso de um artefato serve para garantir foco e transparência no progresso daquele plano específico.","options":[{"label":"A","text":"O Gráfico de Burn-down.","isCorrect":false,"rationale":"Ferramentas como burn-downs são práticas complementares, mas não são compromissos formais do framework."},{"label":"B","text":"A Definição de Pronto.","isCorrect":false,"rationale":"A Definição de Pronto é o compromisso associado ao Incremento."},{"label":"C","text":"A Meta da Sprint.","isCorrect":true,"rationale":"A Meta da Sprint fornece o foco e a razão para o trabalho planejado no Sprint Backlog."},{"label":"D","text":"A Meta do Produto.","isCorrect":false,"rationale":"A Meta do Produto é o compromisso associado ao Product Backlog."}]},{"question":"O que define um Incremento segundo o Guia do Scrum?","hint":"Considere o resultado prático e verificado do trabalho ao final de uma Sprint.","options":[{"label":"A","text":"Um documento de requisitos aprovado pelo Product Owner.","isCorrect":false,"rationale":"No Scrum, valor é gerado através de soluções funcionais, não apenas documentação."},{"label":"B","text":"Um trampolim concreto em direção à Meta do Produto que deve atender à Definição de Pronto.","isCorrect":true,"rationale":"Cada incremento é somado aos anteriores e deve ser utilizável para fornecer valor imediato."},{"label":"C","text":"Uma versão de teste do software que ainda não pode ser usada.","isCorrect":false,"rationale":"Para fornecer valor, o incremento deve ser utilizável, mesmo que não seja liberado imediatamente."},{"label":"D","text":"A soma de todas as tarefas concluídas, independentemente da qualidade.","isCorrect":false,"rationale":"Trabalho que não atende à Definição de Pronto não pode ser considerado parte de um incremento."}]},{"question":"Se um item do Product Backlog não atender à Definição de Pronto, o que deve ser feito com ele?","hint":"Reflita sobre como o framework mantém a integridade da qualidade do que é mostrado aos stakeholders.","options":[{"label":"A","text":"Ele deve ser apresentado na Review com uma ressalva sobre o que falta.","isCorrect":false,"rationale":"Itens que não atendem à Definição de Pronto não podem ser apresentados na Sprint Review."},{"label":"B","text":"Ele retorna ao Product Backlog para consideração futura e não pode ser apresentado na Review.","isCorrect":true,"rationale":"Isso garante a transparência sobre o que está realmente concluído e utilizável."},{"label":"C","text":"O Scrum Master deve decidir se o item pode ser considerado 'pronto o suficiente'.","isCorrect":false,"rationale":"A Definição de Pronto é um padrão de qualidade que deve ser estritamente cumprido pelos Developers."},{"label":"D","text":"Ele é descartado permanentemente, pois o time falhou na Sprint.","isCorrect":false,"rationale":"O item volta para o backlog para ser reavaliado; o Scrum é um processo de aprendizado contínuo."}]},{"question":"De quem é a autoridade exclusiva para cancelar uma Sprint?","hint":"Pense no papel responsável pelo valor do produto e pela direção do negócio.","options":[{"label":"A","text":"Dos Stakeholders principais após análise de custos.","isCorrect":false,"rationale":"Stakeholders influenciam o PO, mas a autoridade final dentro do framework é do Product Owner."},{"label":"B","text":"Do Scrum Master, para proteger o time de pressão externa.","isCorrect":false,"rationale":"O SM garante o processo, mas não tem autoridade sobre o cancelamento do ciclo de negócio."},{"label":"C","text":"Do Product Owner.","isCorrect":true,"rationale":"O PO toma essa decisão se a Meta da Sprint se tornar obsoleta."},{"label":"D","text":"Dos Developers, através de votação majoritária.","isCorrect":false,"rationale":"Embora o time colabore, a autoridade para cancelamento é atribuída apenas ao Product Owner."}]},{"question":"Sobre o refinamento do Product Backlog, o que o Guia do Scrum afirma?","hint":"Trata-se do ato de preparar o trabalho futuro enquanto o atual está sendo executado.","options":[{"label":"A","text":"Deve ser feito exclusivamente pelo Product Owner antes da Sprint Planning.","isCorrect":false,"rationale":"É uma atividade colaborativa, e os Developers são responsáveis pelo dimensionamento."},{"label":"B","text":"Não é necessário se o time for experiente e conhecer bem o produto.","isCorrect":false,"rationale":"O refinamento aumenta a transparência e a confiança necessária para o planejamento eficaz."},{"label":"C","text":"É um evento formal do Scrum com timebox de 4 horas por semana.","isCorrect":false,"rationale":"O refinamento não é um dos eventos formais, mas uma atividade contínua durante a Sprint."},{"label":"D","text":"É uma atividade contínua para adicionar detalhes, como descrição, ordem e tamanho aos itens.","isCorrect":true,"rationale":"O refinamento quebra itens em partes menores e mais precisas para que estejam prontos para seleção."}]},{"question":"O que significa dizer que o Scrum Team é 'multifuncional'?","hint":"Pense na autossuficiência do grupo para entregar um incremento pronto.","options":[{"label":"A","text":"Cada membro do time deve ser especialista em todas as áreas técnicas.","isCorrect":false,"rationale":"Multifuncionalidade refere-se ao time como um todo, não necessariamente a indivíduos 'generalistas extremos'."},{"label":"B","text":"O time trabalha em múltiplas metas de produto simultaneamente.","isCorrect":false,"rationale":"O Scrum Team foca em um objetivo de cada vez, a Meta do Produto."},{"label":"C","text":"O time pode mudar de função (ex: SM vira PO) a qualquer momento.","isCorrect":false,"rationale":"Multifuncionalidade trata de competências técnicas/profissionais necessárias para a entrega, não de troca de papéis."},{"label":"D","text":"Os membros possuem todas as habilidades necessárias para criar valor a cada Sprint.","isCorrect":true,"rationale":"O time não depende de pessoas externas para completar o trabalho definido para a Sprint."}]},{"question":"Qual é a relação entre a Meta da Sprint e o trabalho planejado pelos Developers?","hint":"Considere o equilíbrio entre ter um objetivo claro e a realidade de ambientes complexos.","options":[{"label":"A","text":"A Meta da Sprint é o único objetivo da Sprint, mas oferece flexibilidade sobre o trabalho exato necessário.","isCorrect":true,"rationale":"Se o trabalho for diferente do esperado, o time negocia o escopo com o PO sem afetar a meta."},{"label":"B","text":"O trabalho planejado deve ser seguido à risca, mesmo que a meta mude.","isCorrect":false,"rationale":"O plano é adaptável; o compromisso principal é com a meta, não com a lista inicial de tarefas."},{"label":"C","text":"A Meta da Sprint é definida após os Developers escolherem as tarefas técnicas.","isCorrect":false,"rationale":"A Meta da Sprint é definida de forma colaborativa durante o Tópico Um da Sprint Planning."},{"label":"D","text":"A Meta da Sprint só é importante se houver tempo sobrando na Sprint.","isCorrect":false,"rationale":"A meta cria coerência e foco, sendo o guia fundamental para o trabalho do time durante todo o ciclo."}]},{"question":"Em relação a múltiplos Scrum Teams trabalhando no mesmo produto, qual a regra sobre a Definição de Pronto?","hint":"Pense na necessidade de consistência quando várias partes formam um único produto.","options":[{"label":"A","text":"A Definição de Pronto deve ser ditada apenas pelo time mais antigo.","isCorrect":false,"rationale":"A definição deve ser mútua ou seguir os padrões da organização."},{"label":"B","text":"Não é necessário uma Definição de Pronto se os times conversarem diariamente.","isCorrect":false,"rationale":"A DoD é um compromisso essencial para a transparência do incremento."},{"label":"C","text":"Cada time deve ter sua própria Definição de Pronto para respeitar sua autonomia.","isCorrect":false,"rationale":"Embora autogerenciáveis, a integração do produto exige um padrão de qualidade comum."},{"label":"D","text":"Eles devem definir e cumprir mutuamente a mesma Definição de Pronto.","isCorrect":true,"rationale":"Isso garante que os incrementos produzidos por diferentes times sejam compatíveis e integráveis."}]},{"question":"O que aconteceu com a terminologia 'Auto-organizados' no Guia Scrum 2020?","hint":"Essa mudança aumentou o escopo da autonomia do time sobre o trabalho.","options":[{"label":"A","text":"Foi substituída por 'Hierarquia Adaptativa' para melhor controle organizacional.","isCorrect":false,"rationale":"O Scrum mantém seu foco na ausência de hierarquias internas no time."},{"label":"B","text":"Foi substituída por 'Autogerenciáveis', enfatizando que o time decide quem, como e no que trabalhar.","isCorrect":true,"rationale":"A mudança visa dar mais autonomia e responsabilidade ao Scrum Team sobre o seu próprio destino."},{"label":"C","text":"Foi removida para dar mais autoridade de comando ao Scrum Master.","isCorrect":false,"rationale":"O SM continua sendo um líder que serve, não um gerente de comando e controle."},{"label":"D","text":"Foi mantida apenas para os Developers, excluindo o Product Owner.","isCorrect":false,"rationale":"O conceito de autogerenciamento agora se aplica a todo o Scrum Team."}]},{"question":"Qual o limite de tempo (timebox) sugerido para a Sprint Retrospective em uma Sprint de um mês?","hint":"É o evento que conclui a Sprint, geralmente mais curto que o planejamento e a revisão.","options":[{"label":"A","text":"Máximo de 1 hora.","isCorrect":false,"rationale":"1 hora pode ser insuficiente para uma retrospectiva profunda de um mês de trabalho."},{"label":"B","text":"Máximo de 8 horas.","isCorrect":false,"rationale":"8 horas é o timebox sugerido para o planejamento (Sprint Planning), não para a retrospectiva."},{"label":"C","text":"Não há limite, o time deve discutir até resolver todos os problemas.","isCorrect":false,"rationale":"Todos os eventos do Scrum possuem timeboxes para garantir foco e regularidade."},{"label":"D","text":"Máximo de 3 horas.","isCorrect":true,"rationale":"Para Sprints mais curtas, o evento geralmente é proporcionalmente menor."}]},{"question":"Sobre o Product Backlog, o que significa ele ser 'emergente'?","hint":"Pense na natureza de uma lista que nunca termina enquanto o produto existir.","options":[{"label":"A","text":"Significa que seus itens surgem aleatoriamente durante a execução da Sprint.","isCorrect":false,"rationale":"Embora novos itens surjam, eles são gerenciados e ordenados pelo PO no backlog."},{"label":"B","text":"Significa que ele é criado rapidamente no início do projeto e depois congelado.","isCorrect":false,"rationale":"O Scrum rejeita backlogs congelados, favorecendo o empirismo e a adaptação."},{"label":"C","text":"Significa que ele só deve ser consultado em casos de emergência no projeto.","isCorrect":false,"rationale":"O backlog é a fonte única e constante de trabalho para o time."},{"label":"D","text":"Significa que ele evolui conforme o produto e o ambiente mudam, nunca estando completo.","isCorrect":true,"rationale":"O backlog é uma lista dinâmica que reflete o que é necessário para melhorar o produto em cada momento."}]},{"question":"No Scrum, quem é responsável por transformar itens do Product Backlog em incrementos de valor?","hint":"Considere a unidade fundamental descrita como responsável por todas as atividades do produto.","options":[{"label":"A","text":"O Scrum Team.","isCorrect":true,"rationale":"Embora os Developers façam o trabalho técnico, todo o Scrum Team é responsável pela criação de um incremento valioso a cada Sprint."},{"label":"B","text":"O Gerente de Projetos externo ao time.","isCorrect":false,"rationale":"O Scrum não define o papel de Gerente de Projetos; o time é empoderado para gerenciar seu próprio trabalho."},{"label":"C","text":"Apenas o Product Owner.","isCorrect":false,"rationale":"O PO ordena o trabalho e define o valor, mas não é o único responsável pela criação física do incremento."},{"label":"D","text":"Apenas os Stakeholders.","isCorrect":false,"rationale":"Stakeholders fornecem feedback e necessidades, mas não fazem parte do time que executa o trabalho."}]},{"question":"Como o Guia do Scrum descreve a relação entre o Scrum e outras práticas ou métodos?","hint":"Lembre-se da nota final que fala sobre a imutabilidade do framework mas sua flexibilidade como invólucro.","options":[{"label":"A","text":"O Scrum só funciona se for combinado exclusivamente com o método Kanban.","isCorrect":false,"rationale":"O Scrum é independente de outros métodos, embora possa ser usado com eles."},{"label":"B","text":"O Scrum proíbe o uso de qualquer técnica que não esteja explicitamente no Guia.","isCorrect":false,"rationale":"O Guia incentiva o uso de vários processos e métodos dentro do framework."},{"label":"C","text":"O Scrum funciona como um contêiner para outras técnicas, metodologias e práticas.","isCorrect":true,"rationale":"O framework é propositalmente incompleto para que processos específicos possam ser acoplados a ele."},{"label":"D","text":"O Scrum é uma metodologia completa que torna outras práticas obsoletas.","isCorrect":false,"rationale":"O Scrum é um framework, não uma metodologia completa, e ele integra práticas existentes."}]},{"question":"O que o compromisso da 'Meta do Produto' representa para o Scrum Team?","hint":"Pense no norte magnético que guia as sucessivas Sprints em direção a um valor maior.","options":[{"label":"A","text":"Um objetivo de longo prazo que o time deve cumprir (ou abandonar) antes de assumir o próximo.","isCorrect":true,"rationale":"Ela fornece um alvo claro para o planejamento do Product Backlog e para a evolução do produto."},{"label":"B","text":"Um slogan de marketing definido pelos stakeholders externos.","isCorrect":false,"rationale":"A Meta do Produto está no Product Backlog e é de responsabilidade do Product Owner."},{"label":"C","text":"Uma lista de todos os recursos que o produto terá nos próximos dois anos.","isCorrect":false,"rationale":"A Meta do Produto é um estado futuro alvo, não uma lista detalhada e estática de funcionalidades."},{"label":"D","text":"O conjunto de tarefas técnicas que devem ser feitas na Sprint atual.","isCorrect":false,"rationale":"A meta para a Sprint atual é a Meta da Sprint; a Meta do Produto é de horizonte mais longo."}]}];
+const tr = {"correct":"Correto!","incorrect":"Incorreto","next":"Próxima pergunta →","seeResults":"Ver resultados","complete":"Questionário concluído!","scoreText":"Você acertou {correct} de {total}","tryAgain":"Tentar novamente","rightAnswer":"Resposta correta","notQuite":"Não exatamente"};
+let currentQ = 0, correctCount = 0, streak = 0, answered = false;
+const CONFETTI_COLORS = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#1dd1a1'];
+
+function init() {
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
+  updateProgress();
+  updateStreakBadge();
+  document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', () => selectOption(opt)));
+  document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', nextQuestion));
+}
+
+function updateStreakBadge() {
+  const badge = document.getElementById('streak-badge');
+  if (!badge) return;
+  badge.textContent = streak >= 2 ? ('🔥 ' + streak) : '';
+}
+
+function burstConfetti() {
+  for (let i = 0; i < 24; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    piece.style.animationDuration = (1.6 + Math.random() * 1.2) + 's';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 3000);
+  }
+}
+
+function selectOption(opt) {
+  if (answered) return;
+  answered = true;
+  const q = opt.closest('.question');
+  const options = q.querySelectorAll('.option');
+  const nextBtn = q.querySelector('.next-btn');
+  const isCorrect = opt.dataset.correct === 'true';
+
+  options.forEach(o => o.classList.add('disabled'));
+  opt.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
+
+  if (!isCorrect) {
+    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
+    if (correctOpt) correctOpt.classList.add('show-correct');
+  }
+
+  if (isCorrect) { correctCount++; streak++; burstConfetti(); } else { streak = 0; }
+  updateStreakBadge();
+
+  options.forEach(o => {
+    const wrapper = o.closest('.option-wrapper');
+    const feedback = wrapper.querySelector('.option-feedback');
+    const rationale = o.dataset.rationale;
+    const isThisCorrect = o.dataset.correct === 'true';
+
+    if (rationale && rationale.trim()) {
+      feedback.classList.remove('hidden');
+      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
+      const statusEl = feedback.querySelector('.feedback-status');
+      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
+      statusEl.innerHTML = isThisCorrect ? ('🎉 ' + tr.rightAnswer) : ('😅 ' + tr.notQuite);
+    }
+  });
+
+  nextBtn.classList.remove('hidden');
+  if (currentQ === quizData.length - 1) nextBtn.textContent = '🏁 ' + tr.seeResults;
+}
+
+function nextQuestion() {
+  answered = false;
+  currentQ++;
+  if (currentQ >= quizData.length) { showResults(); return; }
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
+  updateProgress();
+  updateStreakBadge();
+}
+
+function updateProgress() {
+  document.querySelector('.progress-fill').style.width = (currentQ / quizData.length * 100) + '%';
+}
+
+function showResults() {
+  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+  document.getElementById('results').classList.add('active');
+  const pct = Math.round((correctCount / quizData.length) * 100);
+  const starCount = Math.max(1, Math.round(pct / 20));
+  document.getElementById('stars').textContent = '⭐'.repeat(starCount) + '☆'.repeat(5 - starCount);
+  document.getElementById('score').textContent = pct + '%';
+  document.getElementById('score-text').textContent = tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
+  document.querySelector('.progress-fill').style.width = '100%';
+  if (pct >= 80) burstConfetti();
+}
+
+function restart() {
+  currentQ = 0; correctCount = 0; streak = 0; answered = false;
+  document.getElementById('results').classList.remove('active');
+  document.querySelectorAll('.question').forEach((q, i) => {
+    q.classList.toggle('active', i === 0);
+    q.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct'));
+    q.querySelectorAll('.option-feedback').forEach(f => {
+      f.classList.add('hidden');
+      f.classList.remove('correct-feedback', 'incorrect-feedback');
+    });
+    const btn = q.querySelector('.next-btn');
+    btn.classList.add('hidden');
+    btn.textContent = tr.next;
+  });
+  updateProgress();
+  updateStreakBadge();
+}
+
+init();
+</script>
+</body>
+</html>
